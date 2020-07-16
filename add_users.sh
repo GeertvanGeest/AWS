@@ -3,11 +3,18 @@
 ## run as root
 ## sudo su -
 
+groupadd $2
+
 while read user
   do
-    adduser $user \
+    adduser \
     --gecos "" \
-    --disabled-password
+    --disabled-password \
+    $user
+
+    adduser \
+    $user \
+    $2 \
 
     cd /home/$user
     mkdir .ssh
