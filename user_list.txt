@@ -1,2 +1,2 @@
-user2
-user3
+user2	passwd1
+user3	passwd2
