@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-## usage: add_users.sh USER_LIST GROUP
+## usage: add_users.sh USER_LIST GROUP OUTPUT
 ## run as root
 ## sudo su -
 
@@ -12,7 +12,7 @@ while read user
     # echo "user:" $user
     # echo "password:" $password
 
-    echo -e $user'\t'$password
+    echo -e $user'\t'$password >> $3
 
     adduser \
     --gecos "" \

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+## run this at personal computer with AWS CLI installed
 while read user
   do
     aws ec2 create-key-pair \
@@ -8,9 +9,9 @@ while read user
     --output text \
     > private_keys/key_$user.pem
 
-    chmod 400 key_$user.pem
+    chmod 400 private_keys/key_$user.pem
 
     ssh-keygen \
-    -y -f key_$user.pem \
+    -y -f private_keys/key_$user.pem \
     > public_keys/key_$user.pub
   done < $1
