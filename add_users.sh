@@ -6,12 +6,13 @@
 
 groupadd $2
 
-while read line
+while read user
   do
-    user=`echo $line | cut -f 1 -d ' '`
-    password=`echo $line | cut -f 2 -d ' '`
+    password=`openssl rand -base64 14`
     # echo "user:" $user
     # echo "password:" $password
+
+    echo -e $user'\t'$password
 
     adduser \
     --gecos "" \
