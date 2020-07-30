@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 
-## usage: add_users.sh USER_LIST GROUP OUTPUT
+## usage: add_users.sh USER_LIST GROUP KEY_DIR
 ## run as root
 ## sudo su -
 
-groupadd $2
+USER_PASSWD_LIST=$1
+GROUP=$2
+PUBLIC_KEY_DIR=$3
 
-while read user
+groupadd $GROUP
+
+while read user password
   do
-    password=`openssl rand -base64 14`
-    # echo "user:" $user
-    # echo "password:" $password
-
-    echo -e $user'\t'$password >> $3
-
     adduser \
     --gecos "" \
     --disabled-password \
@@ -21,7 +19,7 @@ while read user
 
     adduser \
     $user \
-    $2 \
+    $GROUP \
 
     echo $user:$password | chpasswd
 
@@ -30,8 +28,8 @@ while read user
     chmod 700 .ssh
     touch .ssh/authorized_keys
     chmod 600 .ssh/authorized_keys
-    cat /home/ubuntu/public_keys/key_$user.pub >> .ssh/authorized_keys
+    cat $PUBLIC_KEY_DIR/key_$user.pub >> .ssh/authorized_keys
     chown -R $user .ssh
-  done < $1
+  done < $USER_PASSWD_LIST
 
 # remove users with userdel -r $user
