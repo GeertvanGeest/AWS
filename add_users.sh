@@ -6,7 +6,7 @@
 
 USER_PASSWD_LIST=$1
 GROUP=$2
-PUBLIC_KEY_DIR=$3
+PUBLIC_KEY_DIR=$3 ## use full path!
 
 groupadd $GROUP
 

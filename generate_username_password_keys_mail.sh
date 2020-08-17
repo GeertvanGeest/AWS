@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 USER_LIST=$1
-PRVATE_KEY_DIR=$2
+PRIVATE_KEY_DIR=$2
 PUBLIC_KEY_DIR=$3
 IP=$4
 MAIL_DIR=$5
