@@ -8,7 +8,7 @@ echo "Here are your credentials to logon to the AWS cloud server:
 
 username: $USERNAME
 
-password (only needed for Rstudio server): $PASSWORD
+password (only needed for Rstudio server and jupyterhub): $PASSWORD
 
 your private key is in the attachment.
 
@@ -25,6 +25,7 @@ ssh -i /path/to/key_$USERNAME.pem $USERNAME@$IP
 
 Rstudio server is at port 8787: http://$IP:8787
 
+jupyterhub is at 8000: http://$IP:8000
 
 
 Let me know if there are any issues.
