@@ -10,7 +10,7 @@ MAIL_DIR=$4
 while read user ip
 do
   password=`openssl rand -base64 14`
-  echo -e $user"\t"$password"\t"$ip > username_pw_ip.txt
+  echo -e $user"\t"$password"\t"$ip >> username_pw_ip.txt
   ./generate_mail.sh $user $password $ip > $MAIL_DIR/mail_$user.txt
   ./generate_keys.sh $user $PRIVATE_KEY_DIR $PUBLIC_KEY_DIR
 done < usernames_ip.txt
