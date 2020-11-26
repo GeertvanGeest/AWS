@@ -13,8 +13,7 @@ generate_username_password_keys_mail.sh \
 USERLIST \
 PATH/TO/PRIVATE_KEY_DIR \
 PATH/TO/PUBLIC_KEY_DIR \
-PUBLIC_IP_SERVER \
-PATH/TO/MAIL_OUTPUT 
+PATH/TO/MAIL_OUTPUT
 ```
 
 ## Step 2: add users on the server
@@ -27,5 +26,5 @@ sudo su
 add_users.sh \
 USER_PASSWD_LIST \
 GROUP \
-PATH/TO/PUBLIC_KEYS 
+PATH/TO/PUBLIC_KEYS
 ```
