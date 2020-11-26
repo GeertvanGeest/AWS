@@ -7,7 +7,7 @@ IP=$4
 MAIL_DIR=$5
 
 FIRSTL=`cut -f 1 $USER_LIST | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:] | cut -c-1`
-LASTN=`cut -f 2 $USER_LIST | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:]`
+LASTN=`cut -f 2 $USER_LIST | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:] | tr -d [:space:]`
 
 USERNAMES=$(paste -d '-' <(echo "$FIRSTL") <(echo "$LASTN") | tr -d '-')
 

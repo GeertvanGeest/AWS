@@ -3,3 +3,5 @@ metagenomics
 AWS_credentials*
 *keys
 .DS_Store
+*passwords
+/user_lists*
