@@ -6,14 +6,14 @@ This command launches AWS instances based on a list of users.\n
 It assigns an elastic IP to an instance. Therefore, make sure there are enough available \n
 elastic IPs associated with your AWS account.\n
 \n
--l  tab-delimited list of users, with 4 columns: first name, last name, e-mail, instance name. NOTE: remove any spaces in the names. \n
--o  output directory. Will be created if doesn't exit.\n
--t  AWS instance type e.g. t2.micro.\n
--a  AMI id in the format ami-xxxxxx.\n
--s  Security group id in the format sg-xxxxxx.\n
--b  Block size of additional disk. In gigabytes.\n
--k  Key name. Should be available for AWS.\n
--p  Private key file: <my_key>.pem.\n
+-l  tab-delimited list of users, with 4 columns: first name, last name, e-mail, instance name. NOTE: remove any spaces in the names. Required. \n
+-o  output directory. Will be created if doesn't exist. Default: .\n
+-t  AWS instance type. Default: t2.micro.\n
+-a  AMI id in the format ami-xxxxxx. Required. \n
+-s  Security group id in the format sg-xxxxxx. Required. \n
+-b  Block size of additional disk. In gigabytes. Default: 1.\n
+-k  Key pair name. Should be available for AWS. Required.\n
+-p  Private key file: <my_key>.pem. Should be the private key for -k. Required.\n
 -h  This helper.\n"
 
 while getopts ":l:o:t:a:s:b:k:p:h" opt
@@ -124,8 +124,8 @@ do
   do
     password=`openssl rand -base64 14`
     echo -e $user"\t"$password >> $OUTDIR/passwords/passwords_"$NAME".txt
-    $SOURCEDIR/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
-    $SOURCEDIR/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
+    $SOURCEDIR/scripts/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
+    $SOURCEDIR/scripts/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
   done
 
   echo "waiting 60 seconds to start up .." >&2
@@ -147,7 +147,7 @@ do
     exit 1
   fi
 
-  scp -i $PEM $SOURCEDIR/add_users.sh ubuntu@"$IP":/home/ubuntu
+  scp -i $PEM $SOURCEDIR/scripts/add_users.sh ubuntu@"$IP":/home/ubuntu
   scp -i $PEM $OUTDIR/passwords/passwords_"$NAME".txt ubuntu@"$IP":/home/ubuntu
 
   # generate new users

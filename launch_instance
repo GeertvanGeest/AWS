@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 
-USAGE="Usage: launch_instance.sh -n <name> -o <outdir> -t <type> -a <AMI id> -s <security group> -b <disk size> -e <ip allocation id> -k <key name>\n
+USAGE="Usage: launch_instance.sh -a <AMI id> -s <security group>  -e <ip allocation id> -k <key name> [-n <name>] [-o <outdir>] [-t <type>] [-b <disk size>]\n
 \n
--n  user-specified instance name.\n
--o  output directory. Will be created if doesn't exist.
--t  AWS instance type e.g. t2.micro.\n
--a  AMI id in the format ami-xxxxxx.\n
--s  Security group id in the format sg-xxxxxx.\n
--b  Block size of additional disk. In gigabytes.\n
--e  Elastic ip allocation id in the format eipalloc-xxxxxxx.\n
--k  Key name. Should be available for AWS.\n
+-n  user-specified instance name. Default: auto_instance.\n
+-o  output directory. Will be created if doesn't exist. Default: .\n
+-t  AWS instance type. Default: t2.micro.\n
+-a  AMI id in the format ami-xxxxxx. Required. \n
+-s  Security group id in the format sg-xxxxxx. Required. \n
+-b  Block size of additional disk. In gigabytes. Default: 1.\n
+-e  Elastic ip allocation id in the format eipalloc-xxxxxxx. Required.\n
+-k  Key name. Should be available for AWS. Required.\n
 -h  This helper.\n"
 
 while getopts ":n:o:t:a:s:b:e:k:h" opt
@@ -65,19 +65,17 @@ then
 fi
 
 # required options
-if [ "$NAME" == "" ]; then echo "option -n is missing, but required">&2 && exit 1; fi
-if [ "$TYPE" == "" ]; then echo "option -t is missing, but required">&2 && exit 1; fi
 if [ "$AMI" == "" ]; then echo "option -a is missing, but required">&2 && exit 1; fi
 if [ "$SECGROUP" == "" ]; then echo "option -s is missing, but required">&2 && exit 1; fi
-if [ "$BLOCK" == "" ]; then echo "option -b is missing, but required">&2 && exit 1; fi
 if [ "$ALLOCID" == "" ]; then echo "option -e is missing, but required">&2 && exit 1; fi
 if [ "$KEY" == "" ]; then echo "option -k is missing, but required">&2 && exit 1; fi
 
-# if output dir not given, use current
-if [ "$OUTDIR" == "" ]
-then
-  OUTDIR="."
-fi
+# default values
+if [ "$NAME" == "" ]; then NAME=auto_instance; fi
+if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
+if [ "$BLOCK" == "" ]; then BLOCK=1; fi
+if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
+
 
 mkdir -p $OUTDIR/log
 
