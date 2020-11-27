@@ -147,7 +147,7 @@ do
     exit 1
   fi
 
-  scp -i $PEM add_users.sh ubuntu@"$IP":/home/ubuntu
+  scp -i $PEM $SOURCEDIR/add_users.sh ubuntu@"$IP":/home/ubuntu
   scp -i $PEM $OUTDIR/passwords/passwords_"$NAME".txt ubuntu@"$IP":/home/ubuntu
 
   # generate new users
