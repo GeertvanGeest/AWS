@@ -56,6 +56,7 @@ do
   esac
 done
 
+# print usage if no options are passed
 if [ $OPTIND -eq 1 ]
 then
   echo -e "No options were passed. \n" >&2
@@ -63,6 +64,7 @@ then
   exit 1
 fi
 
+# required options
 if [ "$NAME" == "" ]; then echo "option -n is missing, but required">&2 && exit 1; fi
 if [ "$TYPE" == "" ]; then echo "option -t is missing, but required">&2 && exit 1; fi
 if [ "$AMI" == "" ]; then echo "option -a is missing, but required">&2 && exit 1; fi
@@ -71,23 +73,16 @@ if [ "$BLOCK" == "" ]; then echo "option -b is missing, but required">&2 && exit
 if [ "$ALLOCID" == "" ]; then echo "option -e is missing, but required">&2 && exit 1; fi
 if [ "$KEY" == "" ]; then echo "option -k is missing, but required">&2 && exit 1; fi
 
-
-# NAME=instance1 #n
-# TYPE=t2.micro #t
-# AMI=ami-0e148c450e75def48 #a
-# SECGROUP=sg-0b638dae2ff2643d2 #s
-# BLOCK=1 #b
-# ALLOCID=eipalloc-0488f79057a45cdc0 #e
-# KEY=key_ubuntu_gvg #k
-
+# if output dir not given, use current
 if [ "$OUTDIR" == "" ]
 then
-  OUTDIR="."  
+  OUTDIR="."
 fi
 
 mkdir -p $OUTDIR/log
 
-echo "creating instance with type $TYPE from $AMI"
+# start running instance
+echo "creating instance with type $TYPE from $AMI" >&2
 
 aws ec2 run-instances \
 --image-id $AMI \
@@ -98,43 +93,50 @@ aws ec2 run-instances \
 --block-device-mappings "[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":$BLOCK,\"DeleteOnTermination\":true}}]" \
 > $OUTDIR/log/$NAME.startup.json
 
+# get instance ID
 INSTANCE=`cat $OUTDIR/log/$NAME.startup.json | python3 -c "import sys, json; print(json.load(sys.stdin)['Instances'][0]['InstanceId'])"`
 
-echo "waiting for instance to start .. "
+echo "waiting for instance to start .. " >&2
 sleep 5
 
 STATE=0
+# state binary should be 16 if it's running
 while [ $STATE -ne 16 ]
 do
   sleep 10
-  echo "checking state .. "
+  echo "checking state .. " >&2
   aws ec2 describe-instance-status --instance-ids $INSTANCE > $OUTDIR/log/$NAME.state.json
-  CONT=`grep "\"InstanceStatuses\"\: \[\]" $OUTDIR/log/$NAME.state.json`
-  if [ "$CONT" == "" ]
+
+  # check for emtpy IntstanceStatuses:
+  grep "\"InstanceStatuses\"\: \[\]" $OUTDIR/log/$NAME.state.json >/dev/null
+
+  if [ $? != 0 ]
   then
-    echo "instance is running"
+    echo "instance is running" >&2
+
+    # get state binary:
     STATE=`cat $OUTDIR/log/$NAME.state.json \
     | python3 -c "import sys, json; print(json.load(sys.stdin)['InstanceStatuses'][0]['InstanceState']['Code'])"`
   else
-    echo "instance not running"
+    # instance is not running if InstanceStatuses is empty
+    echo "instance not running, retrying .." >&2
   fi
 done
 
-echo "Associating elastic IP .. "
+# associate elastic IP
+echo "Associating elastic IP .. " >&2
 
 aws ec2 associate-address --allocation-id $ALLOCID --instance-id $INSTANCE > $OUTDIR/log/$NAME.association.json
 
-echo "Setting name to $NAME"
+# name the instance
+echo "Setting name to $NAME" >&2
 
 aws ec2 create-tags --resources $INSTANCE --tags Key=Name,Value=$NAME
 
+# get instance IP
 aws ec2 describe-instances --instance-ids $INSTANCE > $OUTDIR/log/$NAME.description.json
 
 IP=`cat $OUTDIR/log/$NAME.description.json \
 | python3 -c "import sys, json; print(json.load(sys.stdin)['Reservations'][0]['Instances'][0]['PublicIpAddress'])"`
 
-echo "Instance can be appoached at $IP with $KEY"
-
-# generate keys & passwords
-# copy scripts and keys to remote
-# add users to remote
+echo "Instance can be appoached at $IP with $KEY" >&2

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USAGE="Usage: multi_instance_launch.sh -l <user list> -o <outdir> -t <type> -a <AMI id> -s <security group> -b <disk size> -k <key name> -p <key_file.pem>\n
+USAGE="Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]\n
 \n
 This command launches AWS instances based on a list of users.\n
 It assigns an elastic IP to an instance. Therefore, make sure there are enough available \n
@@ -60,6 +60,7 @@ do
   esac
 done
 
+# return usage if no options are passed
 if [ $OPTIND -eq 1 ]
 then
   echo -e "No options were passed. \n" >&2
@@ -67,24 +68,30 @@ then
   exit 1
 fi
 
+# required options
 if [ "$LIST" == "" ]; then echo "option -l is missing, but required">&2 && exit 1; fi
-if [ "$TYPE" == "" ]; then echo "option -t is missing, but required">&2 && exit 1; fi
 if [ "$AMI" == "" ]; then echo "option -a is missing, but required">&2 && exit 1; fi
 if [ "$SECGROUP" == "" ]; then echo "option -s is missing, but required">&2 && exit 1; fi
-if [ "$BLOCK" == "" ]; then echo "option -b is missing, but required">&2 && exit 1; fi
 if [ "$KEY" == "" ]; then echo "option -k is missing, but required">&2 && exit 1; fi
 if [ "$PEM" == "" ]; then echo "option -p is missing, but required">&2 && exit 1; fi
 
-if [ "$OUTDIR" == "" ]
-then
-  OUTDIR=.
-fi
 
+# default values
+if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
+if [ "$BLOCK" == "" ]; then BLOCK=1; fi
+if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
+
+
+# get script source directory to not break secondary script dependencies
+SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+# generate output directories
 for dir in private_keys public_keys emails passwords
 do
   mkdir -p $OUTDIR/$dir
 done
 
+# get instance names from user list
 INSTANCE_NAMES=`cut -f 4 $LIST | sort | uniq | sed 's/\r//g'`
 
 for NAME in $INSTANCE_NAMES
@@ -93,35 +100,58 @@ do
   ALLOCID=`aws ec2 describe-addresses --query 'Addresses[?InstanceId==null]' \
   | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['AllocationId'])"`
 
-  ./launch_instance.sh -n $NAME -o $OUTDIR -t $TYPE -a $AMI -s $SECGROUP -b $BLOCK -e $ALLOCID -k $KEY
+  # call launch_instance
+  $SOURCEDIR/launch_instance -n $NAME -o $OUTDIR -t $TYPE -a $AMI -s $SECGROUP -b $BLOCK -e $ALLOCID -k $KEY
 
+  # get instance ID
+  INSTANCE=`cat $OUTDIR/log/"$NAME".startup.json | python3 -c "import sys, json; print(json.load(sys.stdin)['Instances'][0]['InstanceId'])"`
+
+  # get IP from launced instance
   IP=`cat $OUTDIR/log/$NAME.description.json \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['Reservations'][0]['Instances'][0]['PublicIpAddress'])"`
 
-
+  # generate usernames (spaces in names not supported)
   FIRSTL=`grep "$NAME" "$LIST" | cut -f 1 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:] | cut -c-1`
   LASTN=`grep "$NAME" "$LIST" | cut -f 2 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:]`
 
   USERNAMES=$(paste -d '-' <(echo "$FIRSTL") <(echo "$LASTN") | tr -d '-' | sed 's/\r//g')
 
-  echo "" > $OUTDIR/passwords/passwords_"$NAME".txt
+  # generate empty password file
+  > $OUTDIR/passwords/passwords_"$NAME".txt
 
+  # generate mails and keys
   for user in $USERNAMES
   do
     password=`openssl rand -base64 14`
     echo -e $user"\t"$password >> $OUTDIR/passwords/passwords_"$NAME".txt
-    ./generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
-    ./generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
+    $SOURCEDIR/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
+    $SOURCEDIR/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
   done
 
-  echo "waiting 60 seconds to start up .."
+  echo "waiting 60 seconds to start up .." >&2
   sleep 60
 
+  # remove IP from known hosts
+  # reused elastic IPs give warnings because logging in to different host with the same IP (man in the middle attack)
   ssh-keygen -R $IP
+
+  # secure copy required keys, passwords and script to generate new users
   scp -o StrictHostKeyChecking=accept-new -i $PEM -r $OUTDIR/public_keys ubuntu@"$IP":/home/ubuntu
+
+  # terminate if copying failed
+  if [ $? != 0 ]
+  then
+    echo "Attempt to copy data to remote failed!
+    Terminating instance .." >&2
+    aws ec2 terminate-instances --instance-ids $INSTANCE
+    exit 1
+  fi
+
   scp -i $PEM add_users.sh ubuntu@"$IP":/home/ubuntu
   scp -i $PEM $OUTDIR/passwords/passwords_"$NAME".txt ubuntu@"$IP":/home/ubuntu
 
+  # generate new users
   ssh -i $PEM ubuntu@"$IP" "sudo ./add_users.sh passwords_"$NAME".txt condausers /home/ubuntu/public_keys"
 
+  echo "Successfully generated users" >&2
 done
