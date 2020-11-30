@@ -135,7 +135,12 @@ do
   USERNAMES=$(paste -d '-' <(echo "$FIRSTL") <(echo "$LASTN") | tr -d '-')
 
   # generate empty password file
-  echo "" > $OUTDIR/passwords/passwords_"$NAME".txt
+  if [ -f $OUTDIR/passwords/passwords_"$NAME".txt ]
+  then
+    rm $OUTDIR/passwords/passwords_"$NAME".txt
+    touch $OUTDIR/passwords/passwords_"$NAME".txt
+  fi
+  #echo "" > $OUTDIR/passwords/passwords_"$NAME".txt
 
   for user in $USERNAMES
   do
