@@ -91,7 +91,7 @@ do
   mkdir -p $OUTDIR/$dir
 done
 
-# removing carriage returns and spaces (thanks Excel)
+# removing carriage returns and spaces
 cat $LIST | tr -d '\015\040' > $OUTDIR/users/user_list.txt
 
 L1=`cat $LIST | wc -l`
@@ -128,22 +128,28 @@ do
   IP=`cat $OUTDIR/log/$NAME.description.json \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['Reservations'][0]['Instances'][0]['PublicIpAddress'])"`
 
-  # generate usernames (spaces in names not supported)
+  # generate usernames
   FIRSTL=`grep "$NAME" "$LIST" | cut -f 1 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:] | cut -c-1`
   LASTN=`grep "$NAME" "$LIST" | cut -f 2 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:]`
 
   USERNAMES=$(paste -d '-' <(echo "$FIRSTL") <(echo "$LASTN") | tr -d '-')
 
   # generate empty password file
-  > $OUTDIR/passwords/passwords_"$NAME".txt
+  echo "" > $OUTDIR/passwords/passwords_"$NAME".txt
 
-  # generate mails and keys
   for user in $USERNAMES
   do
-    password=`openssl rand -base64 14`
-    echo -e $user"\t"$password >> $OUTDIR/passwords/passwords_"$NAME".txt
-    $SOURCEDIR/scripts/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
-    $SOURCEDIR/scripts/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
+    aws ec2 describe-key-pairs | grep key_$user > /dev/null
+
+    if [ $? == 0 ]
+    then
+      echo "Key for '$user' is already generated. No new key, password or mail generated for '$user'." >&2
+    else
+      password=`openssl rand -base64 14`
+      echo -e $user"\t"$password >> $OUTDIR/passwords/passwords_"$NAME".txt
+      $SOURCEDIR/scripts/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
+      $SOURCEDIR/scripts/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
+    fi
   done
 
   echo "waiting 60 seconds to start up .." >&2
