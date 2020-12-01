@@ -1,0 +1,3 @@
+Jan	de Wandelaar	jan.wandel@somedomain.com	server1
+Piet	Kopstoot	p.kopstoot@anotherdomain.ch	server1
+Joop	Zoetemelk	joop.zoet@lekkerfietsen.nl	server2

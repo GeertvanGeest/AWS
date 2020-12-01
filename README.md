@@ -75,3 +75,40 @@ A basic example of `multi_instance` would be:
 -k my_key \
 -p path/to/my_key.pem
 ```
+
+Here's the help documentation (`./multi_instance -h`):
+
+```
+Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group> -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]
+
+ This command launches AWS instances based on a list of users.
+ It assigns an elastic IP to an instance. Therefore, make sure there are enough available
+ elastic IPs associated with your AWS account.
+
+ -l tab-delimited list of users, with 4 columns: first name, last name, e-mail, instance name. Required.
+ -o output directory. Will be created if doesn't exist. Default: .
+ -t AWS instance type. Default: t2.micro.
+ -a AMI id in the format ami-xxxxxx. Required.
+ -s Security group id in the format sg-xxxxxx. Required.
+ -b Block size of additional disk. In gigabytes. Default: 1.
+ -k Key pair name. Should be available for AWS. Required.
+ -p Private key file: <my_key>.pem. Should be the private key for -k. Required.
+ -h This helper.
+```
+
+The user list (`-l`) should contain 4 columns stating:
+
+* First name
+* Last name
+* e-mail (not used now)
+* Server name. The instances will be created and tagged with that name.
+
+The rows may contain duplicate names with different servers. This means that for each instance that user will be created. Only one password and one key will be created that can be used on all servers.
+
+The list has to be tab delimited. Here's an example:
+
+```
+Jan     de Wandelaar    jan.wandel@somedomain.com       server1
+Piet    Kopstoot        p.kopstoot@anotherdomain.ch     server1
+Joop    Zoetemelk       joop.zoet@lekkerfietsen.nl      server2
+```
