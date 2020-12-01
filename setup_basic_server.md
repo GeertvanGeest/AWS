@@ -21,7 +21,6 @@ Based on [this tutorial](https://docs.anaconda.com/anaconda/install/multi-user/)
 sudo groupadd condausers
 sudo chgrp -R condausers /opt/miniconda3
 sudo chmod 770 -R /opt/miniconda3 # if condausers can install in /opt
-sudo chmod 750 -R /opt/miniconda3 # if condausers can install in ~
 ```
 
 To get conda as environmental variable, users should run this at first login:
