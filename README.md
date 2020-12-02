@@ -41,6 +41,10 @@ Default region name [None]: eu-central-1
 Default output format [None]: json
 ```
 
+### Create an ssh key pair for yourself
+
+This key pair you can use to login with ssh to your launched instances. It will be the key pair of the user with root access. Find out [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) how to do that.
+
 ### Other requirements
 
 * Python 3 shoud be available as `python3`
@@ -64,7 +68,7 @@ There are three commands: `generate_credentials`, `launch_instance` and `multi_i
 
 ### Generate credentials
 
-First, we'll have to generate credentials. You can do that a while before you launch the actual instances, so you have time to send around the keys and passwords.
+First, we'll have to generate credentials for the users. You can do that a while before you launch the actual instances, so you have time to send around the keys and passwords.
 
 An example of `generate_credentials` would be:
 
@@ -80,9 +84,9 @@ The user list (`-l`) should contain 5 columns stating:
 * Last name
 * e-mail (not used now)
 * Server name. The instances will be created and tagged with that name.
-* Elastic IP address.
+* Elastic IP address. You should associate only one EIP to a server name, and generate on forehand.
 
-The rows may contain duplicate names on different servers. This means that for each instance that user will be created. Only one password and one key will be created that can be used on all servers.
+The rows may contain duplicate names. If the same name is associated with a single server name, it will be created only once. Otherwise, the user will be created for each separate instance. Only one password and one key will be created that can be used on all servers.
 
 The list has to be tab delimited. Here's an example:
 
