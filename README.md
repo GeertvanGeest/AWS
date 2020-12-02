@@ -60,20 +60,52 @@ Create a security group to manage from which IP range and ports your instance ca
 
 ## Step 5: Running the commands
 
-There are two commands `launch_instance` and `multi_instance`. The command `multi_instance` is a wrapper of `launch_instance` to launch multiple instances from a list of users and instance names.
+There are three commands: `generate_credentials`, `launch_instance` and `multi_instance`. The command `multi_instance` is a wrapper of `launch_instance` to launch multiple instances from a list of users and instance names.
+
+### Generate credentials
+
+First, we'll have to generate credentials. You can do that a while before you launch the actual instances, so you have time to send around the keys and passwords.
+
+An example of `generate_credentials` would be:
+
+```sh
+./generate_credentials \
+-l example_data/example_userlist.txt \
+-o test_sepcred
+```
+
+The user list (`-l`) should contain 5 columns stating:
+
+* First name
+* Last name
+* e-mail (not used now)
+* Server name. The instances will be created and tagged with that name.
+* Elastic IP address.
+
+The rows may contain duplicate names on different servers. This means that for each instance that user will be created. Only one password and one key will be created that can be used on all servers.
+
+The list has to be tab delimited. Here's an example:
+
+```
+Jan	de Wandelaar	jan.wandel@somedomain.com	server1	18.198.236.145
+Piet	Kopstoot	p.kopstoot@anotherdomain.ch	server1	18.198.236.145
+Joop	Zoetemelk	joop.zoet@lekkerfietsen.nl	server2	3.125.31.83
+```
+
+### Launching multiple instances
+
+Just before you need them, you can launch the instances. Make sure you have the credentials and elastic IPs ready.
 
 A basic example of `multi_instance` would be:
 
-```sh]
+```sh
 ./multi_instance \
--l user_list.txt \
--o ./test_output \
+-o test_sepcred \
 -t t2.micro \
 -a ami-0e148c450e75def48 \
 -s sg-0b638dae2ff2643d2 \
--b 1 \
 -k my_key \
--p path/to/my_key.pem
+-p /path/to/my_key.pem
 ```
 
 Here's the help documentation (`./multi_instance -h`):
@@ -81,12 +113,9 @@ Here's the help documentation (`./multi_instance -h`):
 ```
 Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group> -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]
 
- This command launches AWS instances based on a list of users.
- It assigns an elastic IP to an instance. Therefore, make sure there are enough available
- elastic IPs associated with your AWS account.
+ This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.
 
- -l tab-delimited list of users, with 4 columns: first name, last name, e-mail, instance name. Required.
- -o output directory. Will be created if doesn't exist. Default: .
+ -o work directory. Should contain output of generate_credentials (emails, password, private_keys, public_keys, users). Default: .
  -t AWS instance type. Default: t2.micro.
  -a AMI id in the format ami-xxxxxx. Required.
  -s Security group id in the format sg-xxxxxx. Required.
@@ -94,21 +123,4 @@ Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group> -
  -k Key pair name. Should be available for AWS. Required.
  -p Private key file: <my_key>.pem. Should be the private key for -k. Required.
  -h This helper.
-```
-
-The user list (`-l`) should contain 4 columns stating:
-
-* First name
-* Last name
-* e-mail (not used now)
-* Server name. The instances will be created and tagged with that name.
-
-The rows may contain duplicate names with different servers. This means that for each instance that user will be created. Only one password and one key will be created that can be used on all servers.
-
-The list has to be tab delimited. Here's an example:
-
-```
-Jan     de Wandelaar    jan.wandel@somedomain.com       server1
-Piet    Kopstoot        p.kopstoot@anotherdomain.ch     server1
-Joop    Zoetemelk       joop.zoet@lekkerfietsen.nl      server2
 ```

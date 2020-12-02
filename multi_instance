@@ -2,12 +2,9 @@
 
 USAGE="Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]\n
 \n
-This command launches AWS instances based on a list of users.\n
-It assigns an elastic IP to an instance. Therefore, make sure there are enough available \n
-elastic IPs associated with your AWS account.\n
+This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.\n
 \n
--l  tab-delimited list of users, with 4 columns: first name, last name, e-mail, instance name. Required. \n
--o  output directory. Will be created if doesn't exist. Default: .\n
+-o  work directory. Should contain output of generate_credentials (emails, password, private_keys, public_keys, users). Default: .\n
 -t  AWS instance type. Default: t2.micro.\n
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
@@ -19,9 +16,6 @@ elastic IPs associated with your AWS account.\n
 while getopts ":l:o:t:a:s:b:k:p:h" opt
 do
   case $opt in
-    l)
-      LIST=$OPTARG
-      ;;
     o)
       OUTDIR=$OPTARG
       ;;
@@ -69,7 +63,6 @@ then
 fi
 
 # required options
-if [ "$LIST" == "" ]; then echo "option -l is missing, but required">&2 && exit 1; fi
 if [ "$AMI" == "" ]; then echo "option -a is missing, but required">&2 && exit 1; fi
 if [ "$SECGROUP" == "" ]; then echo "option -s is missing, but required">&2 && exit 1; fi
 if [ "$KEY" == "" ]; then echo "option -k is missing, but required">&2 && exit 1; fi
@@ -85,77 +78,41 @@ if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
 # get script source directory to not break secondary script dependencies
 SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-# generate output directories
-for dir in private_keys public_keys emails passwords users
-do
-  mkdir -p $OUTDIR/$dir
-done
-
-# removing carriage returns and spaces
-cat $LIST | tr -d '\015\040' > $OUTDIR/users/user_list.txt
-
-L1=`cat $LIST | wc -l`
-L2=`cat $OUTDIR/users/user_list.txt | wc -l`
-
-if [ $L1 != $L2 ]
-then
-  echo "Check returns of user list. This software is incompatible with carriage returns.">&2
-  exit 1
-fi
-
 LIST=$OUTDIR/users/user_list.txt
-
-# check if end of file new line exists
-# and add it if not
-cat $LIST | tail -c1 | read -r _ || echo >> $LIST
 
 # get instance names from user list
 INSTANCE_NAMES=`cut -f 4 $LIST | sort | uniq`
 
 for NAME in $INSTANCE_NAMES
 do
+  IP=`cut -f 4,5 $LIST | grep $NAME | cut -f 2 | sort | uniq`
+
+  NUM=`echo $IP | wc -w`
+
+  if [$NUM != 1 ]
+  then
+    echo "Check each instance ID has a single IP" >&2
+    exit 1
+  fi
+
+  echo "Launching a $TYPE instance at $IP"
+
   # get first available allocation id:
-  ALLOCID=`aws ec2 describe-addresses --query 'Addresses[?InstanceId==null]' \
-  | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['AllocationId'])"`
+  ALLOCID=`aws ec2 describe-addresses --public-ips $IP \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['Addresses'][0]['AllocationId'])"`
+
+  if [ $? != 0 ]
+  then
+    echo "The address $IP is not available. Check your elastic IPs" >&2
+    exit 1
+  fi
 
   # call launch_instance
   $SOURCEDIR/launch_instance -n $NAME -o $OUTDIR -t $TYPE -a $AMI -s $SECGROUP -b $BLOCK -e $ALLOCID -k $KEY
 
   # get instance ID
-  INSTANCE=`cat $OUTDIR/log/"$NAME".startup.json | python3 -c "import sys, json; print(json.load(sys.stdin)['Instances'][0]['InstanceId'])"`
-
-  # get IP from launced instance
-  IP=`cat $OUTDIR/log/$NAME.description.json \
-  | python3 -c "import sys, json; print(json.load(sys.stdin)['Reservations'][0]['Instances'][0]['PublicIpAddress'])"`
-
-  # generate usernames
-  FIRSTL=`grep "$NAME" "$LIST" | cut -f 1 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:] | cut -c-1`
-  LASTN=`grep "$NAME" "$LIST" | cut -f 2 | tr -cd '\11\12\15\40-\176' | tr [:upper:] [:lower:]`
-
-  USERNAMES=$(paste -d '-' <(echo "$FIRSTL") <(echo "$LASTN") | tr -d '-')
-
-  # generate empty password file
-  if [ -f $OUTDIR/passwords/passwords_"$NAME".txt ]
-  then
-    rm $OUTDIR/passwords/passwords_"$NAME".txt
-    touch $OUTDIR/passwords/passwords_"$NAME".txt
-  fi
-  #echo "" > $OUTDIR/passwords/passwords_"$NAME".txt
-
-  for user in $USERNAMES
-  do
-    aws ec2 describe-key-pairs | grep key_$user > /dev/null
-
-    if [ $? == 0 ]
-    then
-      echo "Key for '$user' is already generated. No new key, password or mail generated for '$user'." >&2
-    else
-      password=`openssl rand -base64 14`
-      echo -e $user"\t"$password >> $OUTDIR/passwords/passwords_"$NAME".txt
-      $SOURCEDIR/scripts/generate_mail.sh $user $password $IP > $OUTDIR/emails/mail_$user.txt
-      $SOURCEDIR/scripts/generate_keys.sh $user $OUTDIR/private_keys $OUTDIR/public_keys
-    fi
-  done
+  INSTANCE=`cat $OUTDIR/log/"$NAME".startup.json \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['Instances'][0]['InstanceId'])"`
 
   echo "waiting 60 seconds to start up .." >&2
   sleep 60
@@ -170,14 +127,13 @@ do
   # terminate if copying failed
   if [ $? != 0 ]
   then
-    echo "Attempt to copy data to remote failed!
-    Terminating instance .." >&2
-    aws ec2 terminate-instances --instance-ids $INSTANCE
+    echo "Attempt to copy data to remote failed!" >&2
+    # aws ec2 terminate-instances --instance-ids $INSTANCE
 
-    for user in $USERNAMES
-    do
-      aws ec2 delete-key-pair --key-name key_$user
-    done
+    # for user in $USERNAMES
+    # do
+    #   aws ec2 delete-key-pair --key-name key_$user
+    # done
 
     exit 1
 

@@ -8,3 +8,5 @@ AWS_credentials*
 .DS_Store
 *passwords
 /user_lists*
+/test*
+example_commands.sh
