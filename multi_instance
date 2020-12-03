@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USAGE="Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]\n
+USAGE="Usage: multi_instance -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]\n
 \n
 This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.\n
 \n
