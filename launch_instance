@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation id> -k <key name> [-n <name>] [-o <outdir>] [-t <type>] [-b <disk size>]\n
+USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation id> -k <key name> [-n <name>] [-o <outdir>] [-t <type>] [-b <disk size>] [-d <storage device>]\n
 \n
 -n  user-specified instance name. Default: auto_instance.\n
 -o  output directory. Will be created if doesn't exist. Default: .\n
@@ -8,6 +8,7 @@ USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
 -b  Block size of additional disk. In gigabytes. Default: 1.\n
+-d  Device to mount storage to. Use the root device to expand it. Default: /dev/sda1 \n
 -e  Elastic ip allocation id in the format eipalloc-xxxxxxx. Required.\n
 -k  Key name. Should be available for AWS. Required.\n
 -h  This helper.\n"
@@ -32,6 +33,9 @@ do
       ;;
     b)
       BLOCK=$OPTARG
+      ;;
+    d)
+      DEVICE=$OPTARG
       ;;
     e)
       ALLOCID=$OPTARG
@@ -75,6 +79,7 @@ if [ "$NAME" == "" ]; then NAME=auto_instance; fi
 if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
 if [ "$BLOCK" == "" ]; then BLOCK=1; fi
 if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
+if [ "$DEVICE" == "" ]; then DEVICE="/dev/sda1"; fi
 
 
 mkdir -p $OUTDIR/log
@@ -88,7 +93,7 @@ aws ec2 run-instances \
 --instance-type $TYPE \
 --key-name $KEY \
 --security-group-ids $SECGROUP \
---block-device-mappings "[{\"DeviceName\":\"/dev/sdf\",\"Ebs\":{\"VolumeSize\":$BLOCK,\"DeleteOnTermination\":true}}]" \
+--block-device-mappings "[{\"DeviceName\":\"$DEVICE\",\"Ebs\":{\"VolumeSize\":$BLOCK,\"DeleteOnTermination\":true}}]" \
 > $OUTDIR/log/$NAME.startup.json
 
 # get instance ID

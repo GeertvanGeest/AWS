@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-USAGE="Usage: multi_instance -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]\n
+USAGE="Usage: multi_instance -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>] [-d <storage device>]\n
 \n
 This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.\n
 \n
@@ -9,6 +9,7 @@ This command launches AWS instances based on a list of users and associated cred
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
 -b  Block size of additional disk. In gigabytes. Default: 1.\n
+-d  Device to mount storage to. Use the root device to expand it. Default: /dev/sda1 \n
 -k  Key pair name. Should be available for AWS. Required.\n
 -p  Private key file: <my_key>.pem. Should be the private key for -k. Required.\n
 -h  This helper.\n"
@@ -30,6 +31,9 @@ do
       ;;
     b)
       BLOCK=$OPTARG
+      ;;
+    d)
+      DEVICE=$OPTARG
       ;;
     k)
       KEY=$OPTARG
@@ -73,6 +77,7 @@ if [ "$PEM" == "" ]; then echo "option -p is missing, but required">&2 && exit 1
 if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
 if [ "$BLOCK" == "" ]; then BLOCK=1; fi
 if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
+if [ "$DEVICE" == "" ]; then DEVICE="/dev/sda1"; fi
 
 
 # get script source directory to not break secondary script dependencies
@@ -108,7 +113,7 @@ do
   fi
 
   # call launch_instance
-  $SOURCEDIR/launch_instance -n $NAME -o $OUTDIR -t $TYPE -a $AMI -s $SECGROUP -b $BLOCK -e $ALLOCID -k $KEY
+  $SOURCEDIR/launch_instance -n $NAME -o $OUTDIR -t $TYPE -a $AMI -s $SECGROUP -b $BLOCK -d $DEVICE -e $ALLOCID -k $KEY
 
   # get instance ID
   INSTANCE=`cat $OUTDIR/log/"$NAME".startup.json \
