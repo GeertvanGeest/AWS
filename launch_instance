@@ -8,7 +8,7 @@ USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
 -b  Block size of additional disk. In gigabytes. Default: 1.\n
--d  Device to mount storage to. If it is the root device, it will expand it to -b. Default: root device \n
+-d  Device to mount storage to. If it is the root device, it will expand it to -b. If device is non-existent, a file-system will not be created. Default: root device \n
 -e  Elastic ip allocation id in the format eipalloc-xxxxxxx. Required.\n
 -k  Key name. Should be available for AWS. Required.\n
 -h  This helper.\n"

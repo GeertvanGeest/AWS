@@ -9,7 +9,7 @@ This command launches AWS instances based on a list of users and associated cred
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
 -b  Block size of additional disk. In gigabytes. Default: 1.\n
--d  Device to mount storage to. Use the root device to expand it. Default: /dev/sda1 \n
+-d  Device to mount storage to. If it is the root device, it will expand it to -b. If device is non-existent, a file-system will not be created. Default: root device \n
 -k  Key pair name. Should be available for AWS. Required.\n
 -p  Private key file: <my_key>.pem. Should be the private key for -k. Required.\n
 -h  This helper.\n"

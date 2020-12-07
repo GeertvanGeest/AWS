@@ -115,7 +115,7 @@ A basic example of `multi_instance` would be:
 Here's the help documentation (`./multi_instance -h`):
 
 ```
-Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group> -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>]
+Usage: multi_instance -a <AMI id> -s <security group> -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>] [-d <storage device>]
 
  This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.
 
@@ -124,6 +124,7 @@ Usage: multi_instance_launch.sh -l <user list> -a <AMI id> -s <security group> -
  -a AMI id in the format ami-xxxxxx. Required.
  -s Security group id in the format sg-xxxxxx. Required.
  -b Block size of additional disk. In gigabytes. Default: 1.
+ -d Device to mount storage to. If it is the root device, it will expand it to -b. If device is non-existent, a file-system will not be created. Default: root device
  -k Key pair name. Should be available for AWS. Required.
  -p Private key file: <my_key>.pem. Should be the private key for -k. Required.
  -h This helper.
