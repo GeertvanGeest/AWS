@@ -8,7 +8,7 @@ USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation
 -a  AMI id in the format ami-xxxxxx. Required. \n
 -s  Security group id in the format sg-xxxxxx. Required. \n
 -b  Block size of additional disk. In gigabytes. Default: 1.\n
--d  Device to mount storage to. Use the root device to expand it. Default: /dev/sda1 \n
+-d  Device to mount storage to. If it is the root device, it will expand it to -b. Default: root device \n
 -e  Elastic ip allocation id in the format eipalloc-xxxxxxx. Required.\n
 -k  Key name. Should be available for AWS. Required.\n
 -h  This helper.\n"
@@ -79,7 +79,12 @@ if [ "$NAME" == "" ]; then NAME=auto_instance; fi
 if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
 if [ "$BLOCK" == "" ]; then BLOCK=1; fi
 if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
-if [ "$DEVICE" == "" ]; then DEVICE="/dev/sda1"; fi
+
+if [ "$DEVICE" == "" ]
+then
+  DEVICE=`aws ec2 describe-images --image-ids $AMI \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['Images'][0]['RootDeviceName'])"`
+fi
 
 
 mkdir -p $OUTDIR/log
