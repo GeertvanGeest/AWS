@@ -21,6 +21,7 @@ This is how you login with ssh:
 
 ssh -i /path/to/key_$USERNAME.pem $USERNAME@$IP
 
+The remote server will be available at the start of the course.
 
-Let me know if there are any issues.
+Let Geert van Geest (geert.vangeest@sib.swiss) know if there are any issues.
 "
