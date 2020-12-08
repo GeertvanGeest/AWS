@@ -13,7 +13,7 @@ USAGE="Usage: launch_instance -a <AMI id> -s <security group>  -e <ip allocation
 -k  Key name. Should be available for AWS. Required.\n
 -h  This helper.\n"
 
-while getopts ":n:o:t:a:s:b:e:k:h" opt
+while getopts ":n:o:t:a:s:b:d:e:k:h" opt
 do
   case $opt in
     n)

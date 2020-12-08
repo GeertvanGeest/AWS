@@ -14,7 +14,7 @@ This command launches AWS instances based on a list of users and associated cred
 -p  Private key file: <my_key>.pem. Should be the private key for -k. Required.\n
 -h  This helper.\n"
 
-while getopts ":l:o:t:a:s:b:k:p:h" opt
+while getopts ":l:o:t:a:s:b:d:k:p:h" opt
 do
   case $opt in
     o)
