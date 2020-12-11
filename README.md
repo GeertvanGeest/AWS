@@ -127,5 +127,6 @@ Usage: multi_instance -a <AMI id> -s <security group> -k <key name> -p <key_file
  -d Device to mount storage to. If it is the root device, it will expand it to -b. If device is non-existent, a file-system will not be created. Default: root device
  -k Key pair name. Should be available for AWS. Required.
  -p Private key file: <my_key>.pem. Should be the private key for -k. Required.
+ -c Bash script with command run for all users. Default: 
  -h This helper.
 ```

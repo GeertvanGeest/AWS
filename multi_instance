@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 USAGE="Usage: multi_instance -a <AMI id> -s <security group>  -k <key name> -p <key_file.pem> [-o <outdir>] [-t <type>] [-b <disk size>] [-d <storage device>]\n
 \n
 This command launches AWS instances based on a list of users and associated credentials generated with generate_credentials.\n
@@ -12,9 +14,10 @@ This command launches AWS instances based on a list of users and associated cred
 -d  Device to mount storage to. If it is the root device, it will expand it to -b. If device is non-existent, a file-system will not be created. Default: root device \n
 -k  Key pair name. Should be available for AWS. Required.\n
 -p  Private key file: <my_key>.pem. Should be the private key for -k. Required.\n
+-c  Bash script with command run for all users. Default: "". \n
 -h  This helper.\n"
 
-while getopts ":l:o:t:a:s:b:d:k:p:h" opt
+while getopts ":l:o:t:a:s:b:d:k:p:c:h" opt
 do
   case $opt in
     o)
@@ -40,6 +43,9 @@ do
       ;;
     p)
       PEM=$OPTARG
+      ;;
+    c)
+      SCRIPT=$OPTARG
       ;;
     h)
       echo -e $USAGE  >&2
@@ -72,13 +78,11 @@ if [ "$SECGROUP" == "" ]; then echo "option -s is missing, but required">&2 && e
 if [ "$KEY" == "" ]; then echo "option -k is missing, but required">&2 && exit 1; fi
 if [ "$PEM" == "" ]; then echo "option -p is missing, but required">&2 && exit 1; fi
 
-
 # default values
 if [ "$TYPE" == "" ]; then TYPE=t2.micro; fi
 if [ "$BLOCK" == "" ]; then BLOCK=1; fi
 if [ "$OUTDIR" == "" ]; then OUTDIR=.; fi
 if [ "$DEVICE" == "" ]; then DEVICE="/dev/sda1"; fi
-
 
 # get script source directory to not break secondary script dependencies
 SOURCEDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -94,7 +98,7 @@ do
 
   NUM=`echo $IP | wc -w`
 
-  if [$NUM != 1 ]
+  if [ $NUM != 1 ]
   then
     echo "Check each instance ID has a single IP" >&2
     exit 1
@@ -149,6 +153,17 @@ do
 
   # generate new users
   ssh -i $PEM ubuntu@"$IP" "sudo ./add_users.sh passwords_"$NAME".txt condausers /home/ubuntu/public_keys"
+
+  if [ $SCRIPT != "" ]
+  then
+    while read user pw
+    do
+      BASE=`basename $SCRIPT`
+      echo "Executing script for $user .." >&2
+      scp -i $OUTDIR/private_keys/key_"$user".pem $SCRIPT "$user"@"$IP":/home/$user
+      ssh -i $OUTDIR/private_keys/key_"$user".pem "$user"@"$IP" "bash ./$BASE; rm ./$BASE" < /dev/null
+    done < $OUTDIR/passwords/passwords_"$NAME".txt
+  fi
 
   echo "Successfully generated users" >&2
 done
