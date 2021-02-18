@@ -70,6 +70,7 @@ Approach RStudio server through:
 
 ### Installing R packages available to all users
 
+Note that installing R packages can take quite some resources. If installing R packages, use an instance with >= 2 CPU & 8 Gb RAM. 
 Use `sudo su -` to install packages in `/usr/local/lib/R/site-library`:
 
 ```sh
@@ -77,8 +78,23 @@ sudo su -
 R
 ```
 
+In the interactive R console install the packages:
 ```r
 install.packages("my_package")
+```
+
+Alternatively, prepare an R script with installation requirements:
+
+```sh
+sudo Rscript my_installations.R
+```
+
+Some packages might need some system wide installations, like:
+
+```sh
+sudo apt-get update
+sudo apt-get install libcurl4-openssl-dev
+sudo apt-get install libxml2-dev
 ```
 
 ## Install jupyterhub
