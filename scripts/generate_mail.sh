@@ -14,13 +14,13 @@ your private key is in the attachment.
 
 The IP of the server is: $IP
 
-Save the key in a secure place and change the permissions to 400 (chmod 400 key_$USERNAME.pem).
+For Linux/macOS users:
 
-This is how you login with ssh (only for macOS/Linux):
+Save the key in a secure place and change the permissions to 400 (chmod 400 key_$USERNAME.pem).
 
 ssh -i /path/to/key_$USERNAME.pem $USERNAME@$IP
 
-If you are on Windows, use MobaXterm to login with the private key.
+For Windows users: use MobaXterm to login with the private key.
 
 The remote server will be available at the start of the course.
 
