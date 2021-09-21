@@ -4,8 +4,6 @@ import os
 import smtplib, ssl
 import getpass
 
-# from email import encoders
-# from email.mime.base import MIMEBase
 from os.path import basename
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
@@ -13,15 +11,6 @@ from email.mime.text import MIMEText
 
 import argparse
 
-# smtp_server = "smtp.office365.com"
-# port = 587  # For starttls
-# sender_email = "geert.vangeest@sib.swiss"
-# receiver_email = "geert.vangeest@sib.swiss"
-# password = input("Type your password and press enter: ")
-# message = """\
-# Subject: Hi there
-
-# This message is sent from Python."""
 def send_email(smtp_server, port, sender_email, receiver_email, password, subject, body, attachment):
     # Create a secure SSL context
     
@@ -115,22 +104,3 @@ if __name__ == "__main__":
                 sender_email = args.e, 
                 password = password, 
                 subject = args.t)
-    
-
-
-    # user_list = "test_deploy/users/user_list_usernames.txt"
-    # mail_dir = "test_deploy/emails"
-    # key_dir = "test_deploy/private_keys"
-    # smtp_server = "smtp.office365.com"
-    # port = 587  # For starttls
-    # sender_email = "geert.vangeest@sib.swiss"
-    # subject = "your credentials for SIB course"
-
-    # mail_to_all(user_list = user_list, 
-    #         mail_dir = mail_dir, 
-    #         key_dir = key_dir, 
-    #         smtp_server = smtp_server, 
-    #         port = port, 
-    #         sender_email = sender_email, 
-    #         password = password, 
-    #         subject = subject)
