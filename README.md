@@ -1,6 +1,6 @@
 # AWS for teaching
 
-The commands in this repository help you to generate AWS EC2 instances for teaching.
+The commands in this repository help you to generate AWS EC2 instances for teaching. These scripts have only been tested on ubuntu-based instances (i.e. "ubuntu" is the user with root access). 
 
 ## Step 1: Setup
 
@@ -52,7 +52,7 @@ This key pair you can use to login with ssh to your launched instances. It will 
 
 ## Step 2: Create an AMI
 
-An AMI is an image of a system. This can be used as a template for the instances you will be launching. You can prepare an AMI on a small instance (e.g. install software), store it, and use it as a template for your bigger instances. More info on AMI [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
+An AMI is an image of a system. This can be used as a template for the instances you will be launching. You can prepare an AMI on a small instance (e.g. install software), store it, and use it as a template for your bigger instances. These scripts have only been tested on ubuntu-based instances (i.e. "ubuntu" is the user with root access). More info on AMI [here](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html).
 
 ## Step 3: Allocate elastic IP Addresses
 
